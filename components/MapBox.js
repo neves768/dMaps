@@ -1,10 +1,8 @@
 
-import { StatusBar } from 'expo-status-bar';
-import React,{ useEffect, useState }  from 'react';
-import { StyleSheet, View, Dimensions, Text, Image, TextInput, Button } from 'react-native';
-import Constants from 'expo-constants';
+import React, { useState }  from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { StyleSheet, View, Dimensions, Text, TextInput, Button } from 'react-native';
 import MapView, {Marker} from 'react-native-maps';
-import { render } from 'react-dom';
 
 let _setMarker, postMarker
 
@@ -28,16 +26,22 @@ export default function MapBox ({navigation, defaultView=true}) {
     const [markers, setMarker] = useState([])
     const [coords, setCoords] = useState([0,0])
     const [formData, setFormData] = useState({"title":"", "description": ""})
+    
+    useFocusEffect(
+        React.useCallback(() => {
+            async function getData(){
+                let ftc = await fetch("https://mobile.ect.ufrn.br:3003/markers", {headers: {"Authorization": `Bearer ${token}`}})
+                let r = await ftc.json()
+                setMarker(r)
+            }
+            _setMarker = setMarker
+            getData()
 
-    useEffect(function(){
-        async function getData(){
-            let ftc = await fetch("https://mobile.ect.ufrn.br:3003/markers", {headers: {"Authorization": `Bearer ${token}`}})
-            let r = await ftc.json()
-            setMarker(r)
-        }
-        _setMarker = setMarker
-        getData()
-    }, [])
+            return () => {
+                setMarker([])
+            };
+        }, [])
+    );
 
     postMarker = function(title, desc){
         if(title.length < 2 || desc.length < 2){
